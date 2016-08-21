@@ -1,0 +1,9 @@
+/protected/crontab/crontab_fix_data.php
+/protected/runtime
+/protected/config/_coverConfig/production*
+/source/image/test/
+
+/.project
+/nbproject
+
+

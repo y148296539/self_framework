@@ -1,0 +1,271 @@
+<style type="text/css">
+#baseAvatarImage{
+width: 500px; height: 700px; background: url(<?php echo $bgPicUrl;?>);}
+</style>
+<div id="baseAvatarImage">
+    
+    
+    
+</div>
+
+这里是内容主体
+
+<!-- 底部悬浮条 end-->
+<aside class="app-download">
+    <figure id="change_bg">
+        <figcaption>选择背景模板</figcaption>
+        <img src="http://testwww.dtd365.com/themes/new/static/images/nr_footer_wx.png" alt="网站名称" />
+        <p>合成进行中...</p>
+    </figure>
+    
+    <i class="btn-download" id="code_position">确定二维码位置</i>
+    <i class="btn-download" id="words_position" style="display:none;">确定文字位置</i>
+    <i class="btn-download" id="next_step" style="display:none;">提交合并</i>
+</aside>
+<!-- 底部悬浮条 end -->
+
+<script type="text/javascript">
+wait(function(){
+    //监控移动端 手指滑动操作，绑定响应事件
+    var selfTouch = {
+        _event : null,
+        _move : {x : 0 , y : 0}, //下\左 为正方向
+        _everPosition : null, //记录本次移动之前上一点的位置
+        _position : {x : false , y : false}, //记录当前的位置
+        _touchStartPosition : {x : false , y : false},//触摸起始点
+        _moveParenetId : '',//
+        _moveObj : null,
+        _moveBoxId : '',
+        _drawObj : null,
+        _drawBoxId : '',
+        _drawBoxMinWidth : 0,
+        _drawBoxMinHeight : 0,
+        _drawBoxBorder : 1,
+        _drawBoxWH : 13/19,
+        _limitMarginLeft : [0 , 200],//最大偏移值区间 - X轴
+        _limitMarginTop : [0 , 200],//最大偏移区间 - Y轴
+        _checkMobileType : '',//
+        _registerFuncHandle : {},
+        _tmpMargin : {x : 0 , y : 0},
+        initMove : function(move_element_id , move_parent_id){
+            if(this._moveBoxId){
+                return false;
+            }
+            this._moveBoxId = move_element_id;
+            this._moveParenetId = move_parent_id;
+            this._moveObj = document.getElementById(this._moveBoxId);
+            this._checkMobileType = navigator.userAgent.match(/Android/i) ? 'android' : 'ios';
+            selfTouch._registerFuncHandle.touchstart_move = function(event){selfTouch._touchStartForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_move, false);
+            selfTouch._registerFuncHandle.touchend_move = function(event){selfTouch._touchEndForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchend",selfTouch._registerFuncHandle.touchend_move, false);
+            selfTouch._registerFuncHandle.touchmove_move = function(event){selfTouch._touchMoveForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_move, false);
+        },
+        closeMove : function(){
+            if(this._moveBoxId){
+                document.getElementById(this._moveParenetId).removeEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_move, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchend",selfTouch._registerFuncHandle.touchend_move, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_move, false);
+                this._moveBoxId = '';
+            }
+        },
+        setLimitMoveLength : function(leftMin , leftMax , topMin , topMax){
+            if(leftMin !== false || leftMin !== null){
+                this._limitMarginLeft[0] = leftMin;
+            }
+            if(leftMax !== false || leftMax !== null){
+                this._limitMarginLeft[1] = leftMax;
+            }
+            if(topMin !== false || topMin !== null){
+                this._limitMarginTop[0] = topMin;
+            }
+            if(topMax !== false || topMax !== null){
+                this._limitMarginTop[1] = topMax;
+            }
+        },
+        initDrawBox : function(box_id , move_parent_id , min_width , min_height){
+            if(!this._drawBoxId){
+                this._drawBoxId = box_id;
+                this._moveParenetId = move_parent_id;
+                this._checkMobileType = navigator.userAgent.match(/Android/i) ? 'android' : 'ios';
+                selfTouch._registerFuncHandle.touchstart_drawbox = function(event){selfTouch._touchStartForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_drawbox, false);
+                selfTouch._registerFuncHandle.touchend_drawbox = function(event){selfTouch._touchEndForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchend",selfTouch._registerFuncHandle.touchend_drawbox, false);
+                selfTouch._registerFuncHandle.touchmove_drawbox = function(event){selfTouch._touchMoveForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_drawbox, false);
+                if(min_width){
+                    this._drawBoxMinWidth = min_width;
+                }
+                if(min_height){
+                    this._drawBoxMinHeight = min_height;
+                }
+            }
+        },
+        closeDrawBox : function(){
+            if(this._drawBoxId){
+                document.getElementById(this._moveParenetId).removeEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_drawbox, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchend",selfTouch._registerFuncHandle.touchend_drawbox, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_drawbox, false);
+                this._drawBoxId = '';
+            }
+        },
+        _touchPosition : function(event){
+            this._event = event || window.event;
+            this._everPosition = this._position;
+            this._position = {
+                x:this._event.touches[0].pageX,    
+                y:this._event.touches[0].pageY
+            };
+            if((typeof(this._everPosition) != 'undefined') && (this._everPosition.x !== false) && (this._everPosition.y !== false)){ //计算本次移动距离
+                this._move.x = this._position.x - this._everPosition.x;
+                this._move.y = this._position.y - this._everPosition.y;
+            }
+        },
+        _touchStartForMove : function(event){
+            event.preventDefault();
+            this._touchPosition(event);
+            this._touchStartPosition = {x : this._position.x , y : this._position.y};
+        },
+        _touchEndForMove : function(event){
+            this._everPosition = {x : false , y : false};
+            this._position = {x : false , y : false};
+            event.returnValue = false;
+        },
+        _touchMoveForMove : function(event){
+            this._touchPosition(event);
+            this._showMove();
+        },
+        _showMove : function(){
+            //Y轴的移动区间处理
+            this._tmpMargin.y = (parseInt(this._moveObj.style.marginTop) + parseInt(this._move.y)) > this._limitMarginTop[0] ? (parseInt(this._moveObj.style.marginTop) + parseInt(this._move.y)) : this._limitMarginTop[0];
+            this._tmpMargin.y = (this._tmpMargin.y > this._limitMarginTop[1]) ? this._limitMarginTop[1] : this._tmpMargin.y;
+            this._moveObj.style.marginTop = this._tmpMargin.y + 'px';
+            //X轴的移动区间处理
+            this._tmpMargin.x = (parseInt(this._moveObj.style.marginLeft) + parseInt(this._move.x)) > this._limitMarginLeft[0] ? (parseInt(this._moveObj.style.marginLeft) + parseInt(this._move.x)) : this._limitMarginLeft[0];
+            this._tmpMargin.x = (this._tmpMargin.x > this._limitMarginLeft[1]) ? this._limitMarginLeft[1] : this._tmpMargin.x;
+            this._moveObj.style.marginLeft = this._tmpMargin.x + 'px';
+            this.showMoveIng();
+        },
+        showMoveIng : function(){
+            
+        },
+        _touchStartForDrawBox : function(event){
+            event.preventDefault();
+            this._touchPosition(event);
+            this._touchStartPosition = {x : this._position.x , y : this._position.y};
+            
+            this._drawObj = document.getElementById(this._drawBoxId);
+            if(!this._drawObj){
+                this._drawObj = document.createElement('div');
+                this._drawObj.setAttribute('id' , this._drawBoxId);
+                this._drawObj.style.position = 'absolute';
+                this._drawObj.style.zIndex = '20';
+                this._drawObj.style.border = "1px solid red";
+                document.getElementById(this._moveParenetId).appendChild(this._drawObj);
+            }
+            this._drawObj.style.width = '1px';
+            this._drawObj.style.height = '1px';
+            this._drawObj.style.top = this._position.y +'px';
+            this._drawObj.style.left = this._position.x + 'px';
+            
+        },
+        _touchMoveForDrawBox : function(event){
+            this._touchPosition(event);
+            //尝试锁定宽高比 - 如果设置了宽高比，则按比例划出框
+            if(this._drawBoxWH){
+                var p = {
+                    w : parseInt(this._position.x - this._touchStartPosition.x - this._drawBoxBorder),
+                    h : parseInt(this._position.y - this._touchStartPosition.y - this._drawBoxBorder)
+                }
+                if(p.w/p.h > this._drawBoxWH){
+                    this._drawObj.style.width = (p.h * this._drawBoxWH) + 'px';
+                    this._drawObj.style.height = p.h + 'px';
+                }else{
+                    this._drawObj.style.width = p.w + 'px';
+                    this._drawObj.style.height = (p.w / this._drawBoxWH) + 'px';
+                }
+            }else{
+                this._drawObj.style.width = parseInt(this._position.x - this._touchStartPosition.x - this._drawBoxBorder) + 'px';
+                this._drawObj.style.height = parseInt(this._position.y - this._touchStartPosition.y - this._drawBoxBorder) + 'px';
+            }
+        },
+        _touchEndForDrawBox : function(event){
+            event.returnValue = false;
+            //最小宽度
+            if(parseInt(this._drawObj.style.width) < this._drawBoxMinWidth){
+                this._drawObj.style.width = this._drawBoxMinWidth + 'px';
+            }
+            //最小高度
+            if(parseInt(this._drawObj.style.height) < this._drawBoxMinHeight){
+                this._drawObj.style.height = this._drawBoxMinHeight + 'px';
+            }
+        },
+        returnDrawEndParams : function(){
+            var params = {width : 0 , height : 0 , x: 0 , y : 0};
+            if(this._drawObj){
+                var boxPostion = $('#' + this._moveParenetId).offset();
+                var drawDivPosition = $(this._drawObj).offset();
+                params = {
+                    width : parseInt(this._drawObj.style.width) , 
+                    height : parseInt(this._drawObj.style.height) , 
+                    x: drawDivPosition.left - boxPostion.left, 
+                    y : drawDivPosition.top - boxPostion.top
+                };
+            }
+            return params;
+        },
+        getMovePosition : function(){
+            return {top : parseInt(this._moveObj.style.marginTop) , left : parseInt(this._moveObj.style.marginLeft)};
+        },
+        copyDivToTextarea : function (drawDivObject , boxObject){
+            var boxPostion = boxObject.offset();
+            var drawDivPosition = drawDivObject.offset();
+            var marginTop = drawDivPosition.top - boxPostion.top;
+            marginTop = (marginTop > (bg_height - txt_line_height - txt_border_size)) ? (bg_height - txt_line_height - txt_border_size) : marginTop;
+            var marginLeft = drawDivPosition.left - boxPostion.left;
+            marginLeft = (marginLeft > (bg_width - txt_font_size - txt_border_size)) ? (bg_width - txt_font_size - txt_border_size) : marginLeft;
+            var style = {
+                width : drawDivObject.width(),
+                height : drawDivObject.height(),
+                'margin-top' : marginTop + 'px',
+                'margin-left' : marginLeft + 'px'
+            };
+            var textareaHtml = "<textarea id='"+txtId+"' default='请输入您的祝福语……' box_top="+parseInt(style['margin-top'])+" box_left="+parseInt(style['margin-left'])+" width="+parseInt(style['width'])+">请输入您的祝福语……</textarea>";
+            drawDivObject.remove();
+            boxObject.append(textareaHtml);
+            var txtTarget = $('#' + txtId);
+            txtTarget.css(style);
+            txtTarget.focus(function(){
+                if($(this).val() == $(this).attr('default')){
+                    $(this).val('');
+                }
+            }).blur(function(){
+                if($.trim($(this).val()) == '' ){
+                    $(this).val($(this).attr('default'));
+                }
+            });
+        }
+    }
+    
+    var avatarId = 'baseAvatarImage';
+    
+    
+    selfTouch.initDrawBox('draw_box_id' , avatarId , 12 , 12);
+    
+    $('#code_position').click(function(){
+        var p = selfTouch.returnDrawEndParams();
+        var datas = {pos : p.x+','+p.y+','+p.width+','+p.height}
+        $.post('/demo/index/cutavatar' , datas , function(json){
+            if(json && json.code == 200){
+                alert(json.message);
+                location.href = json.message;
+            }else{
+                alert(json.errorInfo);
+            }
+        } , 'json');
+    });
+    
+});
+</script>  

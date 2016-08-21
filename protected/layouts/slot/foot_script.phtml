@@ -1,0 +1,7 @@
+<script type='text/javascript' src='/source/js/jquery.js'></script>
+<?php if(isset($this->_jsList) && $this->_jsList): foreach($this->_jsList as $js):?>
+<script src="<?php echo $js , '?1'?>"></script>
+<?php endforeach; endif;?>
+<script type="text/javascript">
+wait(null , true);
+</script>

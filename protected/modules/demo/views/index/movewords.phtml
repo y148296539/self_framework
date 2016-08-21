@@ -1,0 +1,469 @@
+<style>
+.combo_img_bg{
+width:750px; height: 1335px; border:1px solid #000; margin: 0px auto; background: url(<?php echo $choose['bg'];?>) no-repeat;}
+#txt_a{
+position:absolute; z-index:20;
+color:<?php echo $choose['fontColor']?>;
+font-size: <?php echo $choose['fontSize'];?>px; line-height:<?php echo $choose['fontSize'];?>px; font-family: <?php echo $choose['fontEName'];?>;
+width:<?php echo $choose['boxWidth'];?>px; height: <?php echo $choose['boxHeight'];?>px; background: url(<?php echo $choose['bg'];?>) no-repeat scroll -1300px -5000px;
+border:<?php echo $choose['boxBorder'];?>px dotted red; resize: none;overflow:hidden}
+
+.chooseBgBox{
+width: 100%; position: fixed; bottom:65px; z-index: 20; display:none;}
+#chooseBgBox_ul{
+height: 100px ; width:100%; border-bottom: 1px solid #00ff00; border-top: 1px solid #00ff00;}
+.chooseBgBox li{
+float:left; margin-right:10px;}
+.chooseBgBox li img{
+width:60px; height:100px; border:1px solid red;}
+</style>
+
+这里是内容主体
+
+<div class="combo_img_bg" id="box_max">
+    <div style="width:100px ; height: 100px; position: absolute; margin:0px 0px 0px 0px; z-index:10;" id="box">
+        <img src="/source/image/combo/qrcode.png" style="width:100px; height:100px; position: absolute; margin: 0px; z-index: 11;" id="choice"/>
+        <div style="width:100% ; height: 100%; display: block; position: absolute; margin:0px; z-index: 12; filter:alpha(opacity=1);-moz-opacity:0.01;opacity: 0.01;" id="cover">
+        </div>
+    </div>
+</div>
+
+<div id="test"></div>
+
+<!--背景选择层-->
+<div class="chooseBgBox">
+    <ul id="chooseBgBox_ul">
+        <?php foreach($templates as $template):?>
+        <li><img src="<?php echo $template['bg'];?>" tid="<?php echo $template['tid'];?>"></li>
+        <?php endforeach;?>
+    </ul>
+</div>
+
+<!-- 底部悬浮条 end-->
+<aside class="app-download">
+    <figure id="change_bg">
+        <figcaption>选择背景模板</figcaption>
+        <img src="http://testwww.dtd365.com/themes/new/static/images/nr_footer_wx.png" alt="网站名称" />
+        <p>合成进行中...</p>
+    </figure>
+    
+    <i class="btn-download" id="code_position">确定二维码位置</i>
+    <i class="btn-download" id="words_position" style="display:none;">确定文字位置</i>
+    <i class="btn-download" id="next_step" style="display:none;">提交合并</i>
+</aside>
+<!-- 底部悬浮条 end -->
+
+<input type="hidden" id="tid" value="<?php echo $choose['tid'];?>"/>
+
+<script type="text/javascript">
+var combo_box_id = 'box_max';//合成的外层盒模型的ID
+var code_box_id = 'box';//二维码的盒模型ID
+var txtId = 'txt_a';//录入文字的文本框的ID
+var txt_font_size = <?php echo $choose['fontSize'];?>;
+var txt_line_height = <?php echo $choose['fontSize'];?>;
+var txt_border_size = <?php echo $choose['boxBorder'];?>;
+var bg_width = 300;
+var bg_height = 500;
+wait(function(){
+    var app = {
+        coverId : '_cover_page_div_self_id',
+        _params : {},
+        _coverZindex : 10,
+        _coverShow : false,
+        _getParams : function(){
+            this._params['page_w'] = Math.max(document.body.scrollWidth,window.screen.width);
+            this._params['page_h'] = Math.max(document.body.scrollHeight,window.screen.height); //页面总高度(如果页面高度比屏幕小，取屏幕高度)
+            this._params['see_w'] = typeof(document.documentElement.clientWidth) != "undefined" ? parseInt(document.documentElement.clientWidth) : parseInt(document.body.clientWidth);
+            this._params['see_h'] = typeof(document.documentElement.clientHeight) != "undefined" ? parseInt(document.documentElement.clientHeight) : parseInt(document.body.clientHeight);
+            this._params['hide_h'] = Math.max(document.documentElement.scrollTop,document.body.scrollTop);
+            this._params['hide_w'] = Math.max(document.documentElement.scrollLeft,document.body.scrollLeft);
+        },
+        getParams : function(){
+            return this._params;
+        },
+        _coverStyle : function(){
+            this._getParams();
+            var style = "position:absolute;top:0;left:0;z-index:"+this._coverZindex+";width:100%;height:"+this._params['page_h']+"px;background:#000;filter:alpha(opacity=70);-moz-opacity:0.7;opacity: 0.7;";
+            return style;
+        },
+        _trim : function(string){
+            var reg = /^\s*(\S+(\s+\S+)*)\s*$/;
+            var match = string.match(reg);
+            return match ? match[1] : '';
+        },
+        _setStyle : function(element , style){
+            var styleList = {}
+            var match = null;
+            var reg = /^([\s\S]+):([\s\S]+)$/;
+            if(typeof(style) == 'string'){
+                var cutList = style.split(';');
+                for(var i in cutList){
+                    match = cutList[i].match(reg);
+                    if(match && match[1] && match[2]){
+                        styleList[this._trim(match[1])] = this._trim(match[2]);
+                    }
+                }
+            }else{
+                styleList = style;
+            }
+            if(typeof(styleList) == 'object'){
+                for(var i in styleList){
+                    element.style[i] = styleList[i]
+                }
+            }
+        },
+        coverPage : function(){
+            var coverId = this.coverId;
+            if(this._coverShow){
+                return;
+            }
+            var div = document.getElementById(coverId);
+            var style = this._coverStyle();
+            if(!div || div.getAttribute('id') != coverId){
+                div = document.createElement('div');
+                div.setAttribute('id' , coverId);
+                document.body.appendChild(div);
+                div.addEventListener('touchstart' , function(event){
+                    event.preventDefault();
+                } , false);
+            }
+            this._coverShow = true;
+    //        div.setAttribute('style' , "display:block;" + style);
+            this._setStyle(div, "display:block;" + style);
+            
+        },
+        hideCoverPage : function(){
+            if(!this._coverShow){
+                return;
+            }
+            this._coverShow = false;
+            var div = document.getElementById(this.coverId);
+            if(div && div.getAttribute('id') == this.coverId){
+                div.parentNode.removeChild(div);
+            }
+        },
+        centerLeft : function(divWidth){
+            divWidth = (typeof(divWidth) == 'object') ? divWidth.width() : divWidth;
+            this._getParams();
+            var spaceWidth2 = this._params['see_w'] - parseInt(divWidth);
+            var cl = spaceWidth2 / 2 + this._params['hide_w'];
+            cl = cl > 0 ? cl : 0;
+            return  cl;
+        },
+        centerTop : function(divHeight){
+            divHeight = (typeof(divHeight) == 'object') ? divHeight.height() : divHeight;
+            this._getParams();
+            var spaceHeight2 = this._params['see_h'] - parseInt(divHeight);
+            var cH = spaceHeight2 / 2 + this._params['hide_h'];
+            cH = cH > 0 ? cH : 0;
+            return  cH;
+        },
+        centerDiv : function(obj , diyWidht , diyHeight){
+            this._getParams();
+            var css = {
+                position  : 'absolute',
+                'z-index' : (this._coverZindex + 2),
+                top       : (diyWidht ? diyWidht : this.centerTop(obj)) + 'px',
+                left      : (diyHeight ? diyHeight : this.centerLeft(obj)) + 'px'
+            }
+            obj.css(css);
+        },
+        on:function(element, type, func) {
+            if (element.addEventListener) {
+                element.addEventListener(type, func, false); //false 表示冒泡
+            } else if (element.attachEvent) {
+                element.attachEvent('on' + type, func);
+            } else {
+                element['on' + type] = func;
+            }
+        },
+        timer:null
+    }
+    //监控移动端 手指滑动操作，绑定响应事件
+    var selfTouch = {
+        _event : null,
+        _move : {x : 0 , y : 0}, //下\左 为正方向
+        _everPosition : null, //记录本次移动之前上一点的位置
+        _position : {x : false , y : false}, //记录当前的位置
+        _touchStartPosition : {x : false , y : false},//触摸起始点
+        _moveParenetId : '',//
+        _moveObj : null,
+        _moveBoxId : '',
+        _drawObj : null,
+        _drawBoxId : '',
+        _limitMarginLeft : [0 , 200],//最大偏移值区间 - X轴
+        _limitMarginTop : [0 , 200],//最大偏移区间 - Y轴
+        _checkMobileType : '',//
+        _registerFuncHandle : {},
+        _tmpMargin : {x : 0 , y : 0},
+        initMove : function(move_element_id , move_parent_id){
+            if(this._moveBoxId){
+                return false;
+            }
+            this._moveBoxId = move_element_id;
+            this._moveParenetId = move_parent_id;
+            this._moveObj = document.getElementById(this._moveBoxId);
+            this._checkMobileType = navigator.userAgent.match(/Android/i) ? 'android' : 'ios';
+            selfTouch._registerFuncHandle.touchstart_move = function(event){selfTouch._touchStartForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_move, false);
+            selfTouch._registerFuncHandle.touchend_move = function(event){selfTouch._touchEndForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchend",selfTouch._registerFuncHandle.touchend_move, false);
+            selfTouch._registerFuncHandle.touchmove_move = function(event){selfTouch._touchMoveForMove(event) };
+            document.getElementById(this._moveParenetId).addEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_move, false);
+        },
+        closeMove : function(){
+            if(this._moveBoxId){
+                document.getElementById(this._moveParenetId).removeEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_move, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchend",selfTouch._registerFuncHandle.touchend_move, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_move, false);
+                this._moveBoxId = '';
+            }
+        },
+        setLimitMoveLength : function(leftMin , leftMax , topMin , topMax){
+            if(leftMin !== false || leftMin !== null){
+                this._limitMarginLeft[0] = leftMin;
+            }
+            if(leftMax !== false || leftMax !== null){
+                this._limitMarginLeft[1] = leftMax;
+            }
+            if(topMin !== false || topMin !== null){
+                this._limitMarginTop[0] = topMin;
+            }
+            if(topMax !== false || topMax !== null){
+                this._limitMarginTop[1] = topMax;
+            }
+        },
+        initDrawBox : function(box_id , move_parent_id){
+            if(!this._drawBoxId){
+                this._drawBoxId = box_id;
+                this._moveParenetId = move_parent_id;
+                this._checkMobileType = navigator.userAgent.match(/Android/i) ? 'android' : 'ios';
+                selfTouch._registerFuncHandle.touchstart_drawbox = function(event){selfTouch._touchStartForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_drawbox, false);
+                selfTouch._registerFuncHandle.touchend_drawbox = function(event){selfTouch._touchEndForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchend",selfTouch._registerFuncHandle.touchend_drawbox, false);
+                selfTouch._registerFuncHandle.touchmove_drawbox = function(event){selfTouch._touchMoveForDrawBox(event) };
+                document.getElementById(this._moveParenetId).addEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_drawbox, false);
+            }
+        },
+        closeDrawBox : function(){
+            if(this._drawBoxId){
+                document.getElementById(this._moveParenetId).removeEventListener("touchstart",selfTouch._registerFuncHandle.touchstart_drawbox, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchend",selfTouch._registerFuncHandle.touchend_drawbox, false);
+                document.getElementById(this._moveParenetId).removeEventListener("touchmove",selfTouch._registerFuncHandle.touchmove_drawbox, false);
+                this._drawBoxId = '';
+            }
+        },
+        _touchPosition : function(event){
+            this._event = event || window.event;
+            this._everPosition = this._position;
+            this._position = {
+                x:this._event.touches[0].pageX,    
+                y:this._event.touches[0].pageY
+            };
+            if((typeof(this._everPosition) != 'undefined') && (this._everPosition.x !== false) && (this._everPosition.y !== false)){ //计算本次移动距离
+                this._move.x = this._position.x - this._everPosition.x;
+                this._move.y = this._position.y - this._everPosition.y;
+            }
+        },
+        _touchStartForMove : function(event){
+//            if( this._checkMobileType === 'android' ) {
+                event.preventDefault();
+//            }
+            this._touchPosition(event);
+            this._touchStartPosition = {x : this._position.x , y : this._position.y};
+        },
+        _touchEndForMove : function(event){
+            this._everPosition = {x : false , y : false};
+            this._position = {x : false , y : false};
+//            if( this._checkMobileType === 'android' ){
+//                window.event.returnValue = false;
+                event.returnValue = false;
+//            }
+        },
+        _touchMoveForMove : function(event){
+            this._touchPosition(event);
+            this._showMove();
+        },
+        _showMove : function(){
+            //Y轴的移动区间处理
+            this._tmpMargin.y = (parseInt(this._moveObj.style.marginTop) + parseInt(this._move.y)) > this._limitMarginTop[0] ? (parseInt(this._moveObj.style.marginTop) + parseInt(this._move.y)) : this._limitMarginTop[0];
+            this._tmpMargin.y = (this._tmpMargin.y > this._limitMarginTop[1]) ? this._limitMarginTop[1] : this._tmpMargin.y;
+            this._moveObj.style.marginTop = this._tmpMargin.y + 'px';
+            //X轴的移动区间处理
+            this._tmpMargin.x = (parseInt(this._moveObj.style.marginLeft) + parseInt(this._move.x)) > this._limitMarginLeft[0] ? (parseInt(this._moveObj.style.marginLeft) + parseInt(this._move.x)) : this._limitMarginLeft[0];
+            this._tmpMargin.x = (this._tmpMargin.x > this._limitMarginLeft[1]) ? this._limitMarginLeft[1] : this._tmpMargin.x;
+            this._moveObj.style.marginLeft = this._tmpMargin.x + 'px';
+            this.showMoveIng();
+        },
+        showMoveIng : function(){
+            
+        },
+        _touchStartForDrawBox : function(event){
+//            if( this._checkMobileType == 'android' ) {
+                event.preventDefault();
+//            }
+            this._touchPosition(event);
+            this._touchStartPosition = {x : this._position.x , y : this._position.y};
+            
+            this._drawObj = document.getElementById(this._drawBoxId);
+            if(!this._drawObj){
+                this._drawObj = document.createElement('div');
+                this._drawObj.setAttribute('id' , this._drawBoxId);
+                this._drawObj.style.position = 'absolute';
+                this._drawObj.style.zIndex = '20';
+                this._drawObj.style.border = "1px solid red";
+                document.getElementById(this._moveParenetId).appendChild(this._drawObj);
+            }
+            this._drawObj.style.width = '1px';
+            this._drawObj.style.height = '1px';
+            this._drawObj.style.top = this._position.y +'px';
+            this._drawObj.style.left = this._position.x + 'px';
+            
+        },
+        _touchMoveForDrawBox : function(event){
+            this._touchPosition(event);
+            
+            this._drawObj.style.width = (this._position.x - this._touchStartPosition.x - txt_border_size) + 'px';
+            this._drawObj.style.height = (this._position.y - this._touchStartPosition.y - txt_border_size) + 'px';
+            
+        },
+        _touchEndForDrawBox : function(event){
+//            if( this._checkMobileType === 'android' ){
+//                window.event.returnValue = false;
+                event.returnValue = false;
+//            }
+            //最小宽度
+            if(parseInt(this._drawObj.style.width) < txt_font_size){
+                this._drawObj.style.width = (txt_font_size + txt_border_size) + 'px';
+            }
+            //最小高度
+            if(parseInt(this._drawObj.style.height) < txt_line_height){
+                this._drawObj.style.height = (txt_line_height + txt_border_size) + 'px';
+            }
+        },
+        getMovePosition : function(){
+            return {top : parseInt(this._moveObj.style.marginTop) , left : parseInt(this._moveObj.style.marginLeft)};
+        },
+        copyDivToTextarea : function (drawDivObject , boxObject){
+            var boxPostion = boxObject.offset();
+            var drawDivPosition = drawDivObject.offset();
+            var marginTop = drawDivPosition.top - boxPostion.top;
+            marginTop = (marginTop > (bg_height - txt_line_height - txt_border_size)) ? (bg_height - txt_line_height - txt_border_size) : marginTop;
+            var marginLeft = drawDivPosition.left - boxPostion.left;
+            marginLeft = (marginLeft > (bg_width - txt_font_size - txt_border_size)) ? (bg_width - txt_font_size - txt_border_size) : marginLeft;
+            var style = {
+                width : drawDivObject.width(),
+                height : drawDivObject.height(),
+                'margin-top' : marginTop + 'px',
+                'margin-left' : marginLeft + 'px'
+            };
+            var textareaHtml = "<textarea id='"+txtId+"' default='请输入您的祝福语……' box_top="+parseInt(style['margin-top'])+" box_left="+parseInt(style['margin-left'])+" width="+parseInt(style['width'])+">请输入您的祝福语……</textarea>";
+            drawDivObject.remove();
+            boxObject.append(textareaHtml);
+            var txtTarget = $('#' + txtId);
+            txtTarget.css(style);
+            txtTarget.focus(function(){
+                if($(this).val() == $(this).attr('default')){
+                    $(this).val('');
+                }
+            }).blur(function(){
+                if($.trim($(this).val()) == '' ){
+                    $(this).val($(this).attr('default'));
+                }
+            });
+        }
+    }
+    
+    
+    selfTouch.setLimitMoveLength(0 , 200 - 2 * 1 , 0 , 400 - 2 * 1);
+    selfTouch.initMove(code_box_id , combo_box_id);
+    
+    //变更背景图图层的显示与隐藏
+    $('#change_bg').unbind().bind('click' , function(){
+        var showBox = $('.chooseBgBox');
+        var ul_id = 'chooseBgBox_ul';
+        if(showBox.attr('show') == '1'){
+            selfTouch.closeMove();
+            app.hideCoverPage();
+            showBox.removeAttr('show').hide();
+            //二维码可移动
+            selfTouch.setLimitMoveLength(0 , 200 - 2 * 1 , 0 , 400 - 2 * 1);
+            selfTouch.initMove(code_box_id , combo_box_id);
+        }else{
+            selfTouch.closeMove();
+            app.coverPage();
+            showBox.attr('show' , '1').show();
+            selfTouch.setLimitMoveLength(0 , 200 , 0 , 0);
+            selfTouch.initMove(ul_id , app.coverId);
+        }
+    });
+    
+    //触发变更图片
+    $('.chooseBgBox img').on('click' , function(){
+        var imgObj = $(this);
+        $('#box_max').css('background-image' , 'url(' + imgObj.attr('src') + ')');
+        $('#tid').val(imgObj.attr('tid'));
+    });
+    
+    $('#code_position').off().on('click' , function(){
+        selfTouch.closeMove();
+        var positionCode = selfTouch.getMovePosition();
+        $('#' + code_box_id).attr('left' , positionCode.left).attr('top' , positionCode.top);
+        selfTouch.initDrawBox('box_id' , combo_box_id);
+        $(this).hide();
+        $('#words_position').show();
+        alert('二维码的位置已摆放完毕，请选出您想发送祝福文字的区域');
+    });
+    
+    $('#words_position').off().on('click' , function(){
+        if(!$(selfTouch._drawObj).attr('id')){
+            alert('您尚未选取发送祝福文字的区域哦~');
+            return false;
+        }
+        selfTouch.closeDrawBox();
+        selfTouch.copyDivToTextarea($(selfTouch._drawObj) , $('#' + combo_box_id));
+        $(this).hide();
+        $('#next_step').show();
+    });
+    
+    
+    $('#next_step').click(function(){
+        var btn = $(this);
+        var txtObj = $('#' + txtId);
+        var content = $.trim(txtObj.val());
+        if(btn.attr('doing') == '1'){
+            return false;
+        }
+        if(content == txtObj.attr('default') || content == ''){
+            alert('请输入您的祝福语~');
+            return false;
+        }
+        btn.attr('doing' , 1);
+        var datas = {
+            mode : 'selfset',
+            words : content ,
+            user_id : 1 ,
+            tid:$('#tid').val(),//合成模板的ID
+            //二维码相关参数
+            codeTop : $('#' + code_box_id).attr('top'),
+            codeLeft : $('#' + code_box_id).attr('left'),
+            //文字框相关参数
+            boxTop : txtObj.attr('box_top'),
+            boxLeft : txtObj.attr('box_left'),
+            boxWidth : txtObj.attr('width')
+        }
+        $.post('/demo/index/movewords' , datas , function(json){
+            btn.removeAttr('doing');
+            if(json && json.code == 200){
+                alert(json.message);
+                location.href=json.message;
+            }else{
+                alert(json.errorInfo);
+            }
+        } , 'json');
+    });
+    
+    
+});
+</script>  

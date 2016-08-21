@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <?php $this->renderPartical($this->_layoutDir.'slot/head.phtml');?>
+<body>
+    <!-- 公用头部 start -->
+    <div class="fn-header">
+        <h1 class="fn-hd-bd">
+            <a href="javascript:void(0)" onclick="location.reload();"><?php echo Application::$config->get('site_name' , '数据平台');?></a>
+        </h1>
+    </div>
+    <!-- 公用头部 end -->
+        
+    <div class="fn-info detail-info">
+        <?php echo $contents;?>
+    </div>
+
+    <?php $this->renderPartical($this->_layoutDir.'slot/foot_script.phtml');?>
+</body>
+</html>

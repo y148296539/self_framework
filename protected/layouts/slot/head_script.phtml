@@ -1,0 +1,18 @@
+<script type="text/javascript">
+function __func_wait(){
+    var __func_register_list = {};
+    var __func_num = 0;
+    function __register(func , doList){
+        if(func){
+            __func_register_list['func_' + __func_num ++] = func;
+        }else if(doList === true){
+            for(var i in __func_register_list){
+                __func_register_list[i]();
+            }
+            __func_register_list = {};
+        }
+    }
+    return __register;
+}
+var wait = __func_wait();
+</script>

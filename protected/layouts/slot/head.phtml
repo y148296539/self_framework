@@ -1,0 +1,16 @@
+<head>
+    <meta charset="<?php echo Application::$config->get('web_page_charset' , 'UTF-8');?>"/>
+    <title><?php echo Application::$config->get('site_name' , '数据平台');?></title>    
+    <meta name="keywords" content=""  />
+    <meta name="description" content=""  />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
+    <meta name="format-detection" content="telephone=no, email=no"/>
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+    <link rel="shortcut icon" href="">
+
+    <link href="/source/css/mobile/global.css" media="screen" rel="stylesheet" type="text/css" />
+    <?php echo $this->renderPartical($this->_layoutDir.'slot/head_script.phtml');?>
+</head>
